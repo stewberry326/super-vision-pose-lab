@@ -1,0 +1,36 @@
+{
+  "coremltools": "9.0",
+  "torch": "2.7.0",
+  "points": 3,
+  "input": 256,
+  "units": {
+    "update": {
+      "status": "converted_and_macos_cpu_executed",
+      "max_abs_errors": {
+        "tracks": 4.57763671875e-05,
+        "occlusion": 2.5262124836444855e-08,
+        "uncertainty": 1.6516423784196377e-09,
+        "next_memory": 0.0002606511116027832
+      },
+      "seconds": 12.763730665959883
+    }
+  },
+  "device_test": "not performed",
+  "model": {
+    "name": "Online BootsTAPIR",
+    "source": "https://storage.googleapis.com/dm-tapnet/bootstap/causal_bootstapir_checkpoint.pt",
+    "license": "Apache-2.0",
+    "sha256": "87c1e752cf5ce56e3e2f7da460aeb4d40fc826d04ef2939bade86a5c7495377f",
+    "backend": "cpu",
+    "input_resolution": [
+      256,
+      256
+    ],
+    "causal": true,
+    "points": 17,
+    "upstream": "google-deepmind/tapnet"
+  },
+  "query_adapter_max_error": 1.4901161193847656e-08,
+  "update_adapter_max_error": 1.52587890625e-05,
+  "temporal_conv_adapter_max_error": 0.0
+}

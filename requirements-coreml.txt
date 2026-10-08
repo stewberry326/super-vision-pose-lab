@@ -1,0 +1,6 @@
+torch==2.7.0
+numpy==2.2.6
+coremltools==9.0
+opencv-python==4.11.0.86
+dm-tree==0.1.10
+einshape==1.0

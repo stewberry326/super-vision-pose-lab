@@ -1,0 +1,25 @@
+// !$*UTF8*$!
+{archiveVersion=1;classes={};objectVersion=56;objects={
+B0000000000000000000000A = { isa=PBXFileReference; lastKnownFileType=sourcecode.swift; path=TAPValidationApp.swift; sourceTree="<group>"; };
+B00000000000000000000014 = { isa=PBXBuildFile; fileRef=B0000000000000000000000A; };
+B0000000000000000000000B = { isa=PBXFileReference; lastKnownFileType=sourcecode.swift; path=ContentView.swift; sourceTree="<group>"; };
+B00000000000000000000015 = { isa=PBXBuildFile; fileRef=B0000000000000000000000B; };
+B0000000000000000000000C = { isa=PBXFileReference; lastKnownFileType=sourcecode.swift; path=TAPEngine.swift; sourceTree="<group>"; };
+B00000000000000000000016 = { isa=PBXBuildFile; fileRef=B0000000000000000000000C; };
+B0000000000000000000001E = { isa=PBXFileReference; explicitFileType=wrapper.application; path=TAPValidation.app; sourceTree=BUILT_PRODUCTS_DIR; };
+B00000000000000000000028 = { isa=PBXGroup; children=(B00000000000000000000029,B0000000000000000000002A); sourceTree="<group>"; };
+B00000000000000000000029 = { isa=PBXGroup; path=TAPValidation; children=(B0000000000000000000000A,B0000000000000000000000B,B0000000000000000000000C); sourceTree="<group>"; };
+B0000000000000000000002A = { isa=PBXGroup; name=Products; children=(B0000000000000000000001E); sourceTree="<group>"; };
+B00000000000000000000032 = { isa=PBXSourcesBuildPhase; buildActionMask=2147483647; files=(B00000000000000000000014,B00000000000000000000015,B00000000000000000000016); runOnlyForDeploymentPostprocessing=0; };
+B00000000000000000000033 = { isa=PBXFrameworksBuildPhase; buildActionMask=2147483647; files=(); runOnlyForDeploymentPostprocessing=0; };
+B00000000000000000000034 = { isa=PBXResourcesBuildPhase; buildActionMask=2147483647; files=(); runOnlyForDeploymentPostprocessing=0; };
+B00000000000000000000035 = { isa=PBXShellScriptBuildPhase; buildActionMask=2147483647; files=(); inputPaths=(); outputPaths=(); runOnlyForDeploymentPostprocessing=0; shellPath=/bin/sh; shellScript="set -e\nmkdir -p \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nfor unit in features query update; do\n if [ -d \"$SRCROOT/../coreml/$unit.mlpackage\" ]; then\n  xcrun coremlcompiler compile \"$SRCROOT/../coreml/$unit.mlpackage\" \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n fi\ndone"; name="Compile TAP models"; alwaysOutOfDate=1; };
+B0000000000000000000003C = { isa=PBXNativeTarget; name=TAPValidation; productName=TAPValidation; productReference=B0000000000000000000001E; productType="com.apple.product-type.application"; buildPhases=(B00000000000000000000032,B00000000000000000000033,B00000000000000000000034,B00000000000000000000035); buildConfigurationList=B00000000000000000000048; dependencies=(); buildRules=(); };
+B0000000000000000000003D = { isa=PBXProject; buildConfigurationList=B00000000000000000000047; compatibilityVersion="Xcode 14.0"; developmentRegion=en; knownRegions=(en,Base); mainGroup=B00000000000000000000028; productRefGroup=B0000000000000000000002A; projectDirPath=""; projectRoot=""; targets=(B0000000000000000000003C); attributes={ LastUpgradeCheck=2700; }; };
+B00000000000000000000050 = { isa=XCBuildConfiguration; name=Debug; buildSettings={ SDKROOT=xros; XROS_DEPLOYMENT_TARGET=2.0; SWIFT_VERSION=5.0; CLANG_ENABLE_MODULES=YES; }; };
+B00000000000000000000051 = { isa=XCBuildConfiguration; name=Release; buildSettings={ SDKROOT=xros; XROS_DEPLOYMENT_TARGET=2.0; SWIFT_VERSION=5.0; CLANG_ENABLE_MODULES=YES; }; };
+B00000000000000000000052 = { isa=XCBuildConfiguration; name=Debug; buildSettings={ SDKROOT=xros; XROS_DEPLOYMENT_TARGET=2.0; SWIFT_VERSION=5.0; CLANG_ENABLE_MODULES=YES; PRODUCT_BUNDLE_IDENTIFIER=dev.supervision.TAPValidation; PRODUCT_NAME="$(TARGET_NAME)"; GENERATE_INFOPLIST_FILE=YES; INFOPLIST_KEY_CFBundleDisplayName="TAP Validation"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation=YES; TARGETED_DEVICE_FAMILY=7; SUPPORTED_PLATFORMS="xros xrsimulator"; CODE_SIGN_STYLE=Automatic; ENABLE_USER_SCRIPT_SANDBOXING=NO; SWIFT_STRICT_CONCURRENCY=minimal; }; };
+B00000000000000000000053 = { isa=XCBuildConfiguration; name=Release; buildSettings={ SDKROOT=xros; XROS_DEPLOYMENT_TARGET=2.0; SWIFT_VERSION=5.0; CLANG_ENABLE_MODULES=YES; PRODUCT_BUNDLE_IDENTIFIER=dev.supervision.TAPValidation; PRODUCT_NAME="$(TARGET_NAME)"; GENERATE_INFOPLIST_FILE=YES; INFOPLIST_KEY_CFBundleDisplayName="TAP Validation"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation=YES; TARGETED_DEVICE_FAMILY=7; SUPPORTED_PLATFORMS="xros xrsimulator"; CODE_SIGN_STYLE=Automatic; ENABLE_USER_SCRIPT_SANDBOXING=NO; SWIFT_STRICT_CONCURRENCY=minimal; }; };
+B00000000000000000000047 = { isa=XCConfigurationList; buildConfigurations=(B00000000000000000000050,B00000000000000000000051); defaultConfigurationIsVisible=0; defaultConfigurationName=Release; };
+B00000000000000000000048 = { isa=XCConfigurationList; buildConfigurations=(B00000000000000000000052,B00000000000000000000053); defaultConfigurationIsVisible=0; defaultConfigurationName=Release; };
+};rootObject=B0000000000000000000003D;}

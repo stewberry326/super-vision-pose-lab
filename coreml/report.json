@@ -1,0 +1,95 @@
+{
+  "units": {
+    "update": {
+      "status": "converted_and_macos_cpu_executed",
+      "max_abs_errors": {
+        "tracks": 4.57763671875e-05,
+        "occlusion": 2.5262124836444855e-08,
+        "uncertainty": 1.6516423784196377e-09,
+        "next_memory": 0.0002606511116027832
+      },
+      "seconds": 12.763730665959883
+    },
+    "features": {
+      "status": "converted_and_macos_cpu_executed",
+      "max_abs_errors": {
+        "low": 4.49642539024353e-06,
+        "high": 1.394888386130333e-06
+      },
+      "seconds": 1.4517150419997051
+    },
+    "query": {
+      "status": "converted_and_macos_cpu_executed",
+      "max_abs_errors": {
+        "query_low": 1.4901161193847656e-08,
+        "query_high": 1.4901161193847656e-08
+      },
+      "seconds": 0.19093262497335672
+    }
+  },
+  "device_test": "not performed",
+  "export_scope": "3 fixed points; 256px; explicit state",
+  "notes": [
+    "Each unit is converted in a separate process due to a native runtime crash when mixing conversion and multiple loaded models.",
+    "Conv1d was lowered to exact three-tap multiply/sum; rank-6 decode was flattened; view_as lowered to fixed reshape.",
+    "Mac CPU parity is numerical model parity, not anatomical or clinical accuracy."
+  ],
+  "coremltools": "9.0",
+  "torch": "2.7.0",
+  "points": 3,
+  "input": 256,
+  "model": {
+    "name": "Online BootsTAPIR",
+    "source": "https://storage.googleapis.com/dm-tapnet/bootstap/causal_bootstapir_checkpoint.pt",
+    "license": "Apache-2.0",
+    "sha256": "87c1e752cf5ce56e3e2f7da460aeb4d40fc826d04ef2939bade86a5c7495377f",
+    "backend": "cpu",
+    "input_resolution": [
+      256,
+      256
+    ],
+    "causal": true,
+    "points": 3,
+    "upstream": "google-deepmind/tapnet"
+  },
+  "query_adapter_max_error": 1.4901161193847656e-08,
+  "update_adapter_max_error": 1.52587890625e-05,
+  "temporal_conv_adapter_max_error": 0.0,
+  "sequence_validation": {
+    "backend": "macOS Swift Core ML CPU_ONLY",
+    "parity": [
+      {
+        "frame": 0,
+        "occlusion_max_abs_error": 3.119930624961853e-08,
+        "processing_ms": 203.0940055847168,
+        "tracks_max_abs_error": 4.57763671875e-05,
+        "uncertainty_max_abs_error": 8.039933163672686e-10
+      },
+      {
+        "frame": 1,
+        "occlusion_max_abs_error": 1.426786184310913e-06,
+        "processing_ms": 155.76398372650146,
+        "tracks_max_abs_error": 6.103515625e-05,
+        "uncertainty_max_abs_error": 2.852175384759903e-09
+      },
+      {
+        "frame": 2,
+        "occlusion_max_abs_error": 2.1886080503463745e-07,
+        "processing_ms": 171.78606986999512,
+        "tracks_max_abs_error": 7.62939453125e-05,
+        "uncertainty_max_abs_error": 2.2700987755168087e-09
+      }
+    ],
+    "points": 3,
+    "resolution": 256,
+    "sequence_frames": 3,
+    "vision_pro_device_test": false
+  },
+  "visionos_build": {
+    "sdk": "XROS27.0",
+    "deployment_target": "2.0",
+    "status": "unsigned device-target build succeeded",
+    "device_execution": false,
+    "main_camera_connected": false
+  }
+}
