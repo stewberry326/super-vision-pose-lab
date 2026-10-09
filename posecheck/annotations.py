@@ -66,7 +66,7 @@ def compare(run,split='evaluation',large_error_ratio=.02):
     for name in report['models']:
         e,_=evaluate(run/name,split)
         if e.empty:continue
-        for variant in (['corrected'] if name in ['ProbPose-TAP','ProbPose-v2'] else ['raw','corrected']):
+        for variant in (['corrected'] if name in ['ProbPose-TAP','ProbPose-v2','ProbPose-v3'] else ['raw','corrected']):
             key=name+' / '+variant
             e=e.copy();e['error']=e[variant+'_error_px'];e['available']=e[variant+'_available']
             all_errors[key]=e
@@ -120,7 +120,7 @@ def delay_report(run,split='evaluation'):
         coords=pd.read_csv(run/model/'coordinates.csv')
         for joint,ref in labels.groupby('joint'):
             series=coords[coords.joint==joint].sort_values('time_seconds');ref=ref.merge(series[['frame_index','time_seconds']],on='frame_index').sort_values('time_seconds')
-            for variant in (['corrected'] if model in ['ProbPose-TAP','ProbPose-v2'] else ['raw','corrected']):
+            for variant in (['corrected'] if model in ['ProbPose-TAP','ProbPose-v2','ProbPose-v3'] else ['raw','corrected']):
                 values=series[[variant+'_x',variant+'_y']].to_numpy().copy()
                 if variant=='raw':
                     # Use the same acceptance semantics as the accuracy comparison.

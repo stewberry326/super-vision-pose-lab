@@ -119,6 +119,15 @@ def correct_v2(frames, settings, quality=None):
                 if prev>=0 and 0<times[i]-times[prev]<=quality.comparison_gap_seconds and np.isfinite(motion[i,j]):
                     movement_history[j].append((times[i],motion[i,j]/(times[i]-times[prev])))
                 last[j]=i; last_cumulative[j]=cumulative.copy()
+    return finish_quality(frames,settings,quality,raw,base,reasons,edge_flag,
+                          motion,thresholds,common,edge_rows)
+
+
+def finish_quality(frames,settings,quality,raw,base,reasons,edge_flag,
+                   motion,thresholds,common,edge_rows):
+    """Shared display/measurement separation; v2 decisions stay unchanged."""
+    n=len(frames)
+    times=np.array([r['time'] for r in frames])
     # Reuse bounded gap/smoothing mechanics, disable both legacy geometry gates.
     rows = [{**r,'reasons':list(reasons[i])} for i,r in enumerate(frames)]
     neutral = replace(settings,bone_change_ratio=float('inf'),max_speed_body_per_second=float('inf'))
@@ -128,7 +137,7 @@ def correct_v2(frames, settings, quality=None):
     display = clean.copy(); display_states = states.copy()
     for i in range(n):
         for j in range(23):
-            if (reasons[i,j] in {'uncertain_motion','low_score','low_visibility'}
+            if (reasons[i,j] in {'uncertain_motion','uncertain_reacquisition','low_score','low_visibility'}
                 and np.isfinite(raw[i,j]).all() and not np.isfinite(clean[i,j]).all()):
                 display[i,j] = raw[i,j]
                 display_states[i,j] = 'uncertain'

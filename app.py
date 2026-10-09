@@ -69,10 +69,12 @@ with tab_input:
         if st.session_state.get('upload_signature')!=signature:
             target.write_bytes(upload.getbuffer());st.session_state['upload_signature']=signature
         path=str(target)
-    try:
-        meta=get_meta(path)
-    except Exception as exc:
-        meta=None;st.error(f'영상 정보를 읽지 못했습니다: {exc}')
+    meta=None
+    if not path.strip():
+        st.info('영상을 업로드하거나 로컬 영상 경로를 입력하세요. 저장된 결과는 ②·⑤ 탭에서 바로 볼 수 있습니다.')
+    else:
+        try:meta=get_meta(path)
+        except Exception as exc:st.error(f'영상 정보를 읽지 못했습니다: {exc}')
     if meta:
         st.caption(f"{meta['width']} × {meta['height']} · {meta['duration']:.2f}초 · {meta['frames']:,} 프레임 · 실제 타임스탬프 사용")
         input_key=str(Path(path).resolve())
@@ -177,7 +179,7 @@ with tab_results:
         c3.metric('전체 처리 시간',f"{report['processing_seconds']:.1f}초")
         st.caption('록온 비율은 추적기의 판단입니다. 동일인을 정확하게 유지했는지는 영상으로 검수해야 합니다.')
         if 'quality_experiment' in report:
-            st.caption('보정 v2 실험: 처리 시간은 저장된 RAW 재처리·영상 생성 시간입니다. 노란 점/점선은 불확실성 표시이며, 해당 점이나 연결선 경고가 있는 각도는 측정에서 제외합니다.')
+            st.caption('보정 실험: 처리 시간은 저장된 RAW 재처리·영상 생성 시간입니다. 노란 점/점선은 불확실성 표시이며, 해당 점이나 연결선 경고가 있는 각도는 측정에서 제외합니다.')
         chosen=st.multiselect('화면에서 비교할 모델',list(report['models']),default=[n for n in report['models'] if n!='RTMW-l'] if 'ProbPose-TAP' in report['models'] else list(report['models']),key='result_models_'+str(run))
         metric=st.selectbox('그래프 지표',['left_knee','right_knee','trunk','left_elbow','right_elbow','left_knee_velocity','right_knee_velocity'],
                             format_func=lambda x:{'left_knee':'왼무릎 끼인각','right_knee':'오른무릎 끼인각','trunk':'영상 수직선 대비 체간 기울기',
@@ -188,7 +190,7 @@ with tab_results:
             table=pd.read_csv(run/name/'metrics.csv');tables[name]=table
             base=metric.replace('_velocity','')
             suffix='_deg_per_sec' if metric.endswith('_velocity') else '_deg'
-            for variant in (['corrected'] if name in ['ProbPose-TAP','ProbPose-v2'] else ['raw','corrected']):
+            for variant in (['corrected'] if name in ['ProbPose-TAP','ProbPose-v2','ProbPose-v3'] else ['raw','corrected']):
                 fig.add_trace(go.Scatter(x=table.time_seconds,y=table[base+'_'+variant+suffix],mode='lines',
                               name=name+' · '+('원본' if variant=='raw' else ('선택 결과' if name=='ProbPose-TAP' else '보정')),connectgaps=False,
                               line={'color':colors[k%len(colors)],'dash':'dot' if variant=='raw' else 'solid','width':1 if variant=='raw' else 2}))
@@ -204,7 +206,7 @@ with tab_results:
         frame_time=st.slider('같은 시점의 관절 비교',float(report['settings']['start']),float(report['settings']['end']),
                              float(report['settings']['start']),step=0.1,key='cursor_'+str(run))
         if event.selection.points:frame_time=float(event.selection.points[-1]['x'])
-        display_mode=st.radio('관절 표시',['보정','측정용','원본'] if 'ProbPose-v2' in report['models'] else ['보정','원본'],horizontal=True)
+        display_mode=st.radio('관절 표시',['보정','측정용','원본'] if any(x.startswith('ProbPose-v') for x in report['models']) else ['보정','원본'],horizontal=True)
         source_meta=get_meta(report['source']['path'])
         if chosen:
             cols=st.columns(len(chosen))
@@ -227,7 +229,7 @@ with tab_results:
                     st.image(cv2.cvtColor(overlay(f,points,states,box,data['times'][i],state,name,width=960,edge_warnings=warnings),cv2.COLOR_BGR2RGB),width='stretch')
                     st.caption('환자의 해부학적 좌우입니다. 파랑=TAP 추적, 보라=재검출, 주황=보간 영향. 점이 없으면 측정 불가입니다.')
                     if name=='ProbPose-TAP':st.caption('비교 영상: 왼쪽 ProbPose 원본 · 가운데 기존 보정 · 오른쪽 TAP 결합')
-                    if name=='ProbPose-v2':st.caption('비교 영상: RAW / 기존 보정 / v2 표시. 노란 점·점선은 확정 좌표가 아닙니다. ⑤ 탭에서 관절별 이유를 확인하세요.')
+                    if name.startswith('ProbPose-v'):st.caption('비교 영상: '+report['quality_experiment'].get('comparison_layout','RAW / 기존 보정 / v2')+' · 노란 점·점선은 확정 좌표가 아닙니다. ⑤ 탭에서 관절별 이유를 확인하세요.')
                     st.video(str(run/name/'comparison.mp4'))
                     st.download_button('좌표 CSV',data=(run/name/'coordinates.csv').read_bytes(),file_name=name+'_coordinates.csv',key='csv_'+name)
                     st.download_button('각도·속도 CSV',data=(run/name/'metrics.csv').read_bytes(),file_name=name+'_metrics.csv',key='metric_'+name)
@@ -372,21 +374,25 @@ with tab_tap:
     else:st.info('Core ML 변환 실험 결과가 아직 없습니다.')
 
 with tab_quality:
-    st.subheader('보정 규칙 v2 · 전체 구간 검토')
-    st.write('길이 변화만으로 관절을 삭제하지 않고, 공통 이동을 제외한 개별 관절 움직임을 함께 확인합니다. 기존 결과를 보존하고 동일 RAW에 새 규칙을 적용합니다.')
+    st.subheader('보정 규칙 · 전체 구간 검토')
+    st.write('v3는 최근 움직임 방향과 주변 관절의 동반 이동을 확인하고, 의심 좌표의 복귀를 연속 관측으로 확인합니다. 기존 v2와 RAW를 보존하며, 정확도 개선 여부는 수동 기준점으로 비교해야 합니다.')
     if run is None or 'ProbPose-s' not in report['models']:
         st.info('ProbPose-s 분석이 필요합니다.')
     else:
-        if st.button('이 분석의 RAW로 보정 v2 비교 만들기'):
+        requested_version=st.selectbox('새 비교에 적용할 규칙',[3,2],format_func=lambda v:f'v{v}'+(' · 방향·동반 이동·복귀 확인' if v==3 else ' · 기존 규칙'))
+        if st.button('이 분석의 RAW로 새 보정 비교 만들기'):
             try:
                 bar=st.progress(0.,text='보정 규칙 및 전체 검토 목록 준비')
-                output=reprocess(run,lambda f,m:bar.progress(f,text=m))
+                output=reprocess(run,lambda f,m:bar.progress(f,text=m),version=requested_version)
                 st.session_state['latest_run']=str(output);st.rerun()
             except Exception as exc:st.exception(exc)
         if 'quality_experiment' not in report:
-            st.info('위 버튼으로 RAW / 기존 보정 / v2 비교와 전체 구간의 검토 목록을 만듭니다.')
+            st.info('위 버튼으로 새 보정 비교와 전체 구간의 검토 목록을 만듭니다.')
         else:
             experiment=report['quality_experiment']
+            quality_label='v'+str(experiment.get('version',2))
+            quality_model=experiment.get('model','ProbPose-v2')
+            st.markdown('**현재 비교: '+quality_label+'**')
             st.caption(f"원본 {report['settings']['start']:.1f}–{report['settings']['end']:.1f}초 · {report['sampled_frames']}개 분석 프레임 전체 검사. 원본 영상 전체/모든 원본 프레임 검증은 아닙니다.")
             overview=json.loads((run/'review_summary.json').read_text())
             a,b,c=st.columns(3)
@@ -399,21 +405,26 @@ with tab_quality:
             qindex=st.selectbox('검토할 표본',list(range(len(queue))),format_func=lambda j:f"{queue.iloc[j].time_seconds:.2f}초 · "+' / '.join(queue_labels.get(x,x) for x in queue.iloc[j].selection_source.split(' | ')))
             sample=queue.iloc[qindex];frame_index=int(sample.frame_index);t=float(sample.time_seconds)
             st.caption(('설정 조정용' if sample.suggested_split=='calibration' else '최종 평가용으로 남겨둔 구간')+' · 예측 비교를 보고 기준점을 찍으면 판단이 영향을 받을 수 있으니, ③ 탭에서 원본만 보고 지정하세요.')
-            st.image(str(run/'review'/f'{frame_index:06d}_comparison.jpg'),width='stretch',caption='왼쪽 RAW · 가운데 기존 보정 · 오른쪽 v2 표시 (노란 점/점선: 불확실)')
+            st.image(str(run/'review'/f'{frame_index:06d}_comparison.jpg'),width='stretch',caption=experiment.get('comparison_layout','RAW / 기존 보정 / v2')+' · 노란 점/점선: 불확실')
             with st.expander('원본만 보기'):
                 st.image(str(run/'review'/f'{frame_index:06d}_original.jpg'),width='stretch')
-            diag=pd.read_csv(run/'ProbPose-v2/coordinates.csv')
+            diag=pd.read_csv(run/quality_model/'coordinates.csv')
             diag=diag[(diag.frame_index==frame_index)&diag.joint.isin(NAMES[5:17])].copy()
             old=pd.read_csv(run/'ProbPose-s/coordinates.csv')
             old=old[old.frame_index==frame_index][['joint','rejection_reason','corrected_state']].rename(columns={'rejection_reason':'old_reason','corrected_state':'old_state'})
             diag=diag.merge(old,on='joint');diag['관절']=diag.joint.map(dict(zip(NAMES,LABELS)))
             reason_labels={'valid':'유효','outlier_bone':'길이 변화로 제외','outlier_speed':'속도 급변으로 제외','outlier_isolated_motion_and_segment':'개별 움직임+길이 이상으로 제외',
-                'uncertain_motion':'개별 움직임 의심 (표시만)','low_score':'품질 낮음','low_visibility':'가시성 낮음','out_of_frame':'화면 밖','unsupported_or_missing':'좌표 없음','low_presence':'존재 가능성 낮음'}
+                'uncertain_reacquisition':'연속 관측으로 복귀 확인 중 (표시만)','uncertain_motion':'개별 움직임 의심 (표시만)','low_score':'품질 낮음','low_visibility':'가시성 낮음','out_of_frame':'화면 밖','unsupported_or_missing':'좌표 없음','low_presence':'존재 가능성 낮음'}
             diag['기존 처리']=diag.old_reason.map(lambda x:reason_labels.get(x,x))
-            diag['v2 처리']=diag.v2_reason.map(lambda x:reason_labels.get(x,x))
+            diag['새 처리']=diag[quality_label+'_reason'].map(lambda x:reason_labels.get(x,x))
+            if quality_label=='v3' and (run/'ProbPose-v2/coordinates.csv').exists():
+                previous=pd.read_csv(run/'ProbPose-v2/coordinates.csv')
+                previous=previous[previous.frame_index==frame_index][['joint','v2_reason']]
+                diag=diag.merge(previous,on='joint')
+                diag['v2 처리']=diag.v2_reason.map(lambda x:reason_labels.get(x,x))
             diag['길이 경고 수']=diag.segment_warning_count
             diag['측정용 좌표']=diag.measurement_available
-            st.dataframe(diag[['관절','기존 처리','v2 처리','길이 경고 수','측정용 좌표','score','visibility']],hide_index=True,width='stretch')
+            st.dataframe(diag[['관절','기존 처리']+(['v2 처리'] if 'v2 처리' in diag else [])+['새 처리','길이 경고 수','측정용 좌표','score','visibility']],hide_index=True,width='stretch')
             st.caption('“유효”는 규칙 통과를 뜻합니다. 실제 관절 위치가 맞다는 정답 판정은 아닙니다. 좌표가 있어도 연결선 경고가 있는 각도는 제외될 수 있습니다.')
             def choose_annotation_frame():
                 st.session_state['annot_frame_'+str(run)]=int(sample.sample_index)
@@ -424,12 +435,12 @@ with tab_quality:
             labels={'not_reviewed':'미검토','correct':'위치가 맞아 보임','incorrect':'위치가 틀려 보임','unjudgeable':'가림·잘림 등으로 판단 불가'}
             left,right=st.columns(2)
             raw_judgment=left.selectbox('RAW 위치 판단',judgments,format_func=labels.get,key=f'raw_review_{run}_{frame_index}_{review_joint}')
-            v2_judgment=right.selectbox('v2 화면 위치 판단',judgments,format_func=labels.get,key=f'v2_review_{run}_{frame_index}_{review_joint}')
+            v2_judgment=right.selectbox(quality_label+' 화면 위치 판단',judgments,format_func=labels.get,key=f'v2_review_{run}_{frame_index}_{review_joint}')
             comment=st.text_input('판단 근거 / 가림·카메라 움직임',key=f'review_comment_{run}_{frame_index}_{review_joint}')
             if st.button('이 판단 저장'):
                 p=run/'review_judgments.csv'
-                judgments_df=pd.read_csv(p) if p.exists() else pd.DataFrame(columns=['frame_index','joint','raw_judgment','v2_display_judgment','split','note'])
-                item={'frame_index':frame_index,'joint':NAMES[review_joint],'raw_judgment':raw_judgment,'v2_display_judgment':v2_judgment,'split':sample.suggested_split,'note':comment}
+                judgments_df=pd.read_csv(p) if p.exists() else pd.DataFrame(columns=['frame_index','joint','raw_judgment',quality_label+'_display_judgment','split','note'])
+                item={'frame_index':frame_index,'joint':NAMES[review_joint],'raw_judgment':raw_judgment,quality_label+'_display_judgment':v2_judgment,'split':sample.suggested_split,'note':comment}
                 mask=(judgments_df.frame_index==frame_index)&(judgments_df.joint==item['joint'])
                 pd.concat([judgments_df[~mask],pd.DataFrame([item])],ignore_index=True).to_csv(p,index=False)
                 st.success('검토 판단을 저장했습니다. 정량 오차는 ③ 탭의 수동 기준점으로 비교하세요.')
@@ -438,4 +449,4 @@ with tab_quality:
                 st.dataframe(pd.read_csv(run/'rule_comparison.csv'),hide_index=True,width='stretch')
             for filename,label in [('review_queue.csv','검토 목록 CSV'),('review_frames.csv','전체 프레임 진단 CSV'),('rule_comparison.csv','관절별 규칙 비교 CSV')]:
                 st.download_button(label,(run/filename).read_bytes(),file_name=filename)
-            st.video(str(run/'ProbPose-v2/comparison.mp4'))
+            st.video(str(run/quality_model/'comparison.mp4'))
